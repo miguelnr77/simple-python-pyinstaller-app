@@ -41,17 +41,12 @@ resource "docker_container" "docker_in_docker" {
     volume_name     = docker_volume.jenkins-data.name
     container_path  = "/var/jenkins_home"
   }
-
-  ports {
-    internal = 2376
-    external = 2376
-  }
 }
 
 variable "host" {
   description = "Docker host."
   type        = string
-  default     = "tcp://docker:2376"
+  default     = "tcp://172.25.0.3:2376"
 }
 
 variable "cert" {
@@ -94,11 +89,6 @@ resource "docker_container" "jenkins_container" {
   volumes {
     volume_name     = docker_volume.jenkins-data.name
     container_path  = "/var/jenkins_home"
-  }
-
-  ports {
-    internal = 8080
-    external = 8081
   }
 }
 
