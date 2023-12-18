@@ -8,10 +8,14 @@ terraform {
   }
 }
 
-provider "docker" {}
+#Indicamos proveedor
+
+provider "docker" {
+  host = "unix://var/run/docker.sock"
+}
 
 resource "docker_network" "jenkins_network" {
-  name = "jenkins_unique_name"
+  name = "jenkinsNet"
 }
 
 resource "docker_volume" "jenkins-docker-certs" {
@@ -26,7 +30,7 @@ resource "docker_container" "docker_in_docker" {
   name      = "dind"
   image     = "docker:dind"
   privileged = true
-  network_mode	= "jenkins"
+  network_mode	= docker_network.jenkins_network.name
   
   env = [
     "DOCKER_TLS_CERTDIR=/certs",
@@ -73,7 +77,7 @@ resource "docker_container" "jenkins_container" {
   name          = "jenkContainer"
   image         = docker_image.jenkins_image.name
   
-  network_mode	= "jenkins"
+  network_mode	= "jenkinsNet"
   
   env = [
     "DOCKER_HOST=${var.host}",
@@ -90,6 +94,13 @@ resource "docker_container" "jenkins_container" {
     volume_name     = docker_volume.jenkins-data.name
     container_path  = "/var/jenkins_home"
   }
+  
+  ports {
+    internal = 8080
+    external = 8080
+  }
+  
+  restart = "on-failure"
 }
 
   
