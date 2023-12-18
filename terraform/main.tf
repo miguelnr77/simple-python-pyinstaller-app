@@ -13,12 +13,15 @@ resource "docker_network" "jenkins_network" {
   name = "jenkins-container-network"
 }
 
-resource "docker_volume" "jenkins-docker-certs" {
+resource "docker_volume" "jenkins_docker_certs" {
   name = "jenkins-docker-certs"
 }
 
-resource "docker_volume" "jenkins-data" {
+resource "docker_volume" "jenkins_data" {
   name = "jenkins-data"
+}
+resource "docker_volume" "home" {
+	name = "home_volume"
 }
 
 resource "docker_container" "jenkins_docker" {
@@ -32,12 +35,12 @@ resource "docker_container" "jenkins_docker" {
   ]
 
   volumes {
-    volume_name    = docker_volume.jenkins-docker-certs.name
+    volume_name    = docker_volume.jenkins_docker_certs.name
     container_path = "/certs/client"
   }
 
   volumes {
-    volume_name    = docker_volume.jenkins-data.name
+    volume_name    = docker_volume.jenkins_data.name
     container_path = "/var/jenkins_home"
   }
 
@@ -63,7 +66,7 @@ resource "docker_container" "jenkins_docker" {
 }
 
 resource "docker_image" "jenkins_image" {
-  name = "myjenkins-blueocean:121123112"
+  name = "myjenkins-blueocean:2.426.2-1"
 
   build {
     context    = "/home/miguelnr7/GitHub/simple-python-pyinstaller-app"
@@ -88,17 +91,17 @@ resource "docker_container" "jenkins_container" {
   ]
 
   volumes {
-    volume_name = docker_volume.jenkins-docker-certs.name
+    volume_name = docker_volume.jenkins_docker_certs.name
     container_path = "/certs/client"
   }
 
   volumes {
-    volume_name = docker_volume.jenkins-data.name
+    volume_name = docker_volume.jenkins_data.name
     container_path = "/var/jenkins_home"
   }
 
   volumes {
-    volume_name     = "host-home-volume"
+    volume_name     = docker_volume.home.name
     container_path  = "/home"
   }
 
