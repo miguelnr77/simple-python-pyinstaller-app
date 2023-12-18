@@ -10,9 +10,7 @@ terraform {
 
 #Indicamos proveedor
 
-provider "docker" {
-  host = "unix://var/run/docker.sock"
-}
+provider "docker" {}
 
 resource "docker_network" "jenkins_network" {
   name = "jenkinsNet"
