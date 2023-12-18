@@ -2,26 +2,28 @@ terraform {
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
-      version = "~> 3.0.2"
+      version = "~> 3.0.1"
     }
   }
 }
 
-provider "docker" {}
+provider "docker" {
+}
 
 resource "docker_network" "jenkins_network" {
   name = "jenkins-container-network"
 }
 
-resource "docker_volume" "jenkins_docker_certs" {
+resource "docker_volume" "jenkins-docker-certs" {
   name = "jenkins-docker-certs"
 }
 
-resource "docker_volume" "jenkins_data" {
+resource "docker_volume" "jenkins-data" {
   name = "jenkins-data"
 }
+
 resource "docker_volume" "home" {
-	name = "home_volume"
+  name = "home_volume"
 }
 
 resource "docker_container" "jenkins_docker" {
@@ -35,12 +37,12 @@ resource "docker_container" "jenkins_docker" {
   ]
 
   volumes {
-    volume_name    = docker_volume.jenkins_docker_certs.name
+    volume_name    = docker_volume.jenkins-docker-certs.name
     container_path = "/certs/client"
   }
 
   volumes {
-    volume_name    = docker_volume.jenkins_data.name
+    volume_name    = docker_volume.jenkins-data.name
     container_path = "/var/jenkins_home"
   }
 
@@ -78,9 +80,11 @@ resource "docker_container" "jenkins_container" {
   depends_on   = [docker_image.jenkins_image]
   name         = "jenkins_container"
   image        = docker_image.jenkins_image.name
+
   networks_advanced {
-  	name = docker_network.jenkins_network.name
+    name = docker_network.jenkins_network.name
   }
+
   restart      = "on-failure"
 
   env = [
@@ -91,12 +95,12 @@ resource "docker_container" "jenkins_container" {
   ]
 
   volumes {
-    volume_name = docker_volume.jenkins_docker_certs.name
+    volume_name = docker_volume.jenkins-docker-certs.name
     container_path = "/certs/client"
   }
 
   volumes {
-    volume_name = docker_volume.jenkins_data.name
+    volume_name = docker_volume.jenkins-data.name
     container_path = "/var/jenkins_home"
   }
 
@@ -110,5 +114,4 @@ resource "docker_container" "jenkins_container" {
     external = 8080
   }
 }
-
 
