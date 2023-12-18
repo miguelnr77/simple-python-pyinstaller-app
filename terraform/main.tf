@@ -13,7 +13,10 @@ terraform {
 provider "docker" {}
 
 resource "docker_network" "jenkins_network" {
-  name = "jenkinsNet"
+  name = "red_jenkins"
+  ipam_config {
+    subnet = "172.21.0.0/24"
+  }
 }
 
 resource "docker_volume" "jenkins-docker-certs" {
@@ -24,11 +27,21 @@ resource "docker_volume" "jenkins-data" {
   name = "jenkins-data"
 }
 
-resource "docker_container" "docker_in_docker" {
-  name      = "dind"
-  image     = "docker:dind"
+resource "docker_image" "docker_in_docker" {
+  name = "docker:dind"
+  keep_locally = false
+}
+
+
+resource "docker_container" "jenkins_docker" {
+  name      = "jenkins-docker"
+  image     = docker_image.docker_in_docker.image_id
   privileged = true
-  network_mode	= docker_network.jenkins_network.name
+  rm = true
+  networks_advanced {
+    name = docker_network.jenkins_network.name
+    ipv4_address = "172.21.0.3"
+  }
   
   env = [
     "DOCKER_TLS_CERTDIR=/certs",
@@ -43,12 +56,27 @@ resource "docker_container" "docker_in_docker" {
     volume_name     = docker_volume.jenkins-data.name
     container_path  = "/var/jenkins_home"
   }
+  
+  ports { 
+    internal = 3000
+    external = 3000
+  }
+  
+  ports {
+    internal = 5000
+    external = 5000
+  }
+  
+  ports {
+    internal = 2376
+    external = 2376
+  }
 }
 
 variable "host" {
   description = "Docker host."
   type        = string
-  default     = "tcp://172.25.0.3:2376"
+  default     = "tcp://172.21.0.3:2376"
 }
 
 variable "cert" {
@@ -75,12 +103,15 @@ resource "docker_container" "jenkins_container" {
   name          = "jenkContainer"
   image         = docker_image.jenkins_image.name
   
-  network_mode	= "jenkinsNet"
+  networks_advanced {
+    name = docker_network.jenkins_network.name
+  }
   
   env = [
     "DOCKER_HOST=${var.host}",
     "DOCKER_CERTS_PATH=${var.cert}",
     "DOCKER_TLS_VERIFY=${var.tls}",
+    "JAVA_OPTS=-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true",
   ]
 
   volumes {
@@ -93,6 +124,10 @@ resource "docker_container" "jenkins_container" {
     container_path  = "/var/jenkins_home"
   }
   
+  ports {
+    internal = 50000
+    external = 50001
+  }
   ports {
     internal = 8080
     external = 8081
