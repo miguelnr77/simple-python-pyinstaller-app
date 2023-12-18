@@ -95,7 +95,7 @@ resource "docker_container" "jenkins_container" {
   
   ports {
     internal = 8080
-    external = 8080
+    external = 8081
   }
   
   restart = "on-failure"
